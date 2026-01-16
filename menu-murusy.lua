@@ -1,4 +1,4 @@
--- Murusy Hub - Blox Fruit | UI + TAB SYSTEM + DRAG
+-- Murusy Hub - Blox Fruit | UI + Tabs + Drag (FIXED)
 
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
@@ -6,15 +6,15 @@ local lp = Players.LocalPlayer
 
 -- ===== DRAG =====
 local function Drag(frame)
-    local drag, dragInput, startPos, startFrame
+    local dragging, dragInput, startPos, startFrame
     frame.InputBegan:Connect(function(i)
         if i.UserInputType == Enum.UserInputType.MouseButton1 then
-            drag = true
+            dragging = true
             startPos = i.Position
             startFrame = frame.Position
             i.Changed:Connect(function()
                 if i.UserInputState == Enum.UserInputState.End then
-                    drag = false
+                    dragging = false
                 end
             end)
         end
@@ -25,7 +25,7 @@ local function Drag(frame)
         end
     end)
     UIS.InputChanged:Connect(function(i)
-        if i == dragInput and drag then
+        if i == dragInput and dragging then
             local d = i.Position - startPos
             frame.Position = UDim2.new(
                 startFrame.X.Scale, startFrame.X.Offset + d.X,
@@ -35,15 +35,17 @@ local function Drag(frame)
     end)
 end
 
--- ===== COLOR =====
+-- ===== COLORS =====
 local CYAN = Color3.fromRGB(0,191,255)
 local BG = Color3.fromRGB(20,20,20)
 local PANEL = Color3.fromRGB(30,30,30)
 local ITEM = Color3.fromRGB(25,25,25)
 
 -- ===== GUI =====
-local gui = Instance.new("ScreenGui", lp.PlayerGui)
+local gui = Instance.new("ScreenGui")
+gui.Name = "MurusyHub"
 gui.ResetOnSpawn = false
+gui.Parent = lp:WaitForChild("PlayerGui")
 
 -- ===== TOGGLE =====
 local Toggle = Instance.new("TextButton", gui)
@@ -65,6 +67,7 @@ Main.Position = UDim2.fromScale(0.5,0.5)
 Main.AnchorPoint = Vector2.new(0.5,0.5)
 Main.BackgroundColor3 = BG
 Main.BorderSizePixel = 0
+Main.Visible = true
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0,10)
 Drag(Main)
 
@@ -82,12 +85,12 @@ Header.Font = Enum.Font.GothamBold
 Header.TextSize = 15
 Header.BorderSizePixel = 0
 
--- ===== LEFT =====
+-- ===== LEFT TABS =====
 local Left = Instance.new("ScrollingFrame", Main)
 Left.Position = UDim2.fromOffset(10,46)
 Left.Size = UDim2.fromOffset(220,310)
-Left.CanvasSize = UDim2.new(0,0,0,0)
 Left.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Left.CanvasSize = UDim2.new(0,0,0,0)
 Left.ScrollBarThickness = 4
 Left.ScrollBarImageColor3 = CYAN
 Left.BackgroundColor3 = PANEL
@@ -97,18 +100,16 @@ Instance.new("UICorner", Left).CornerRadius = UDim.new(0,8)
 local LL = Instance.new("UIListLayout", Left)
 LL.Padding = UDim.new(0,6)
 
--- ===== RIGHT HOLDER =====
+-- ===== PAGES =====
 local Pages = Instance.new("Folder", Main)
-Pages.Name = "Pages"
 
--- ===== PAGE CREATE =====
 local function NewPage(name)
     local p = Instance.new("ScrollingFrame", Pages)
     p.Name = name
     p.Position = UDim2.fromOffset(240,46)
     p.Size = UDim2.fromOffset(400,310)
-    p.CanvasSize = UDim2.new(0,0,0,0)
     p.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    p.CanvasSize = UDim2.new(0,0,0,0)
     p.ScrollBarThickness = 4
     p.ScrollBarImageColor3 = CYAN
     p.BackgroundColor3 = PANEL
@@ -118,11 +119,9 @@ local function NewPage(name)
 
     local L = Instance.new("UIListLayout", p)
     L.Padding = UDim.new(0,8)
-
     return p
 end
 
--- ===== OPTION =====
 local function Option(parent, text)
     local f = Instance.new("Frame", parent)
     f.Size = UDim2.new(1,0,0,38)
@@ -138,10 +137,10 @@ local function Option(parent, text)
     t.TextColor3 = Color3.fromRGB(230,230,230)
     t.Font = Enum.Font.Gotham
     t.TextSize = 13
-    t.TextXAlignment = Left
+    t.TextXAlignment = Enum.TextXAlignment.Left
 end
 
--- ===== TABS =====
+-- ===== TAB LIST =====
 local Tabs = {
     "Shop","Status And Server","LocalPlayer","Setting Farm",
     "Hold and Select Skill","Farming","Stack Farming",
@@ -175,5 +174,4 @@ for _,name in ipairs(Tabs) do
     end)
 end
 
--- ===== DEFAULT TAB =====
 PageList["Shop"].Visible = true
