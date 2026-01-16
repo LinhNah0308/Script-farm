@@ -1,7 +1,39 @@
--- Murusy Hub - Blox Fruit (UI ONLY | Fixed)
+-- Murusy Hub - Blox Fruit | UI + TAB SYSTEM + DRAG
 
 local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
 local lp = Players.LocalPlayer
+
+-- ===== DRAG =====
+local function Drag(frame)
+    local drag, dragInput, startPos, startFrame
+    frame.InputBegan:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+            drag = true
+            startPos = i.Position
+            startFrame = frame.Position
+            i.Changed:Connect(function()
+                if i.UserInputState == Enum.UserInputState.End then
+                    drag = false
+                end
+            end)
+        end
+    end)
+    frame.InputChanged:Connect(function(i)
+        if i.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = i
+        end
+    end)
+    UIS.InputChanged:Connect(function(i)
+        if i == dragInput and drag then
+            local d = i.Position - startPos
+            frame.Position = UDim2.new(
+                startFrame.X.Scale, startFrame.X.Offset + d.X,
+                startFrame.Y.Scale, startFrame.Y.Offset + d.Y
+            )
+        end
+    end)
+end
 
 -- ===== COLOR =====
 local CYAN = Color3.fromRGB(0,191,255)
@@ -10,15 +42,13 @@ local PANEL = Color3.fromRGB(30,30,30)
 local ITEM = Color3.fromRGB(25,25,25)
 
 -- ===== GUI =====
-local gui = Instance.new("ScreenGui")
-gui.Name = "MurusyHub"
+local gui = Instance.new("ScreenGui", lp.PlayerGui)
 gui.ResetOnSpawn = false
-gui.Parent = lp:WaitForChild("PlayerGui")
 
--- ===== TOGGLE BUTTON (FIXED) =====
+-- ===== TOGGLE =====
 local Toggle = Instance.new("TextButton", gui)
 Toggle.Size = UDim2.fromOffset(120,36)
-Toggle.Position = UDim2.fromScale(0.02,0.32)
+Toggle.Position = UDim2.fromScale(0.02,0.3)
 Toggle.Text = "Murusy Hub"
 Toggle.BackgroundColor3 = PANEL
 Toggle.TextColor3 = CYAN
@@ -26,16 +56,21 @@ Toggle.Font = Enum.Font.GothamBold
 Toggle.TextSize = 13
 Toggle.BorderSizePixel = 0
 Instance.new("UICorner", Toggle).CornerRadius = UDim.new(0,8)
+Drag(Toggle)
 
--- ===== MAIN MENU (FIXED) =====
+-- ===== MAIN =====
 local Main = Instance.new("Frame", gui)
 Main.Size = UDim2.fromOffset(650,370)
 Main.Position = UDim2.fromScale(0.5,0.5)
 Main.AnchorPoint = Vector2.new(0.5,0.5)
 Main.BackgroundColor3 = BG
 Main.BorderSizePixel = 0
-Main.Visible = true
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0,10)
+Drag(Main)
+
+Toggle.MouseButton1Click:Connect(function()
+    Main.Visible = not Main.Visible
+end)
 
 -- ===== HEADER =====
 local Header = Instance.new("TextLabel", Main)
@@ -46,53 +81,83 @@ Header.TextColor3 = CYAN
 Header.Font = Enum.Font.GothamBold
 Header.TextSize = 15
 Header.BorderSizePixel = 0
-Instance.new("UICorner", Header).CornerRadius = UDim.new(0,10)
 
--- ===== LEFT PANEL =====
-local Left = Instance.new("Frame", Main)
+-- ===== LEFT =====
+local Left = Instance.new("ScrollingFrame", Main)
 Left.Position = UDim2.fromOffset(10,46)
 Left.Size = UDim2.fromOffset(220,310)
+Left.CanvasSize = UDim2.new(0,0,0,0)
+Left.AutomaticCanvasSize = Enum.AutomaticSize.Y
+Left.ScrollBarThickness = 4
+Left.ScrollBarImageColor3 = CYAN
 Left.BackgroundColor3 = PANEL
 Left.BorderSizePixel = 0
 Instance.new("UICorner", Left).CornerRadius = UDim.new(0,8)
 
-local LeftScroll = Instance.new("ScrollingFrame", Left)
-LeftScroll.Size = UDim2.new(1,-8,1,-8)
-LeftScroll.Position = UDim2.fromOffset(4,4)
-LeftScroll.CanvasSize = UDim2.new(0,0,0,0)
-LeftScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-LeftScroll.ScrollBarImageColor3 = CYAN
-LeftScroll.ScrollBarThickness = 4
-LeftScroll.BackgroundTransparency = 1
-LeftScroll.BorderSizePixel = 0
-
-local LL = Instance.new("UIListLayout", LeftScroll)
+local LL = Instance.new("UIListLayout", Left)
 LL.Padding = UDim.new(0,6)
 
--- ===== RIGHT PANEL =====
-local Right = Instance.new("Frame", Main)
-Right.Position = UDim2.fromOffset(240,46)
-Right.Size = UDim2.fromOffset(400,310)
-Right.BackgroundColor3 = PANEL
-Right.BorderSizePixel = 0
-Instance.new("UICorner", Right).CornerRadius = UDim.new(0,8)
+-- ===== RIGHT HOLDER =====
+local Pages = Instance.new("Folder", Main)
+Pages.Name = "Pages"
 
-local RightScroll = Instance.new("ScrollingFrame", Right)
-RightScroll.Size = UDim2.new(1,-8,1,-8)
-RightScroll.Position = UDim2.fromOffset(4,4)
-RightScroll.CanvasSize = UDim2.new(0,0,0,0)
-RightScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-RightScroll.ScrollBarImageColor3 = CYAN
-RightScroll.ScrollBarThickness = 4
-RightScroll.BackgroundTransparency = 1
-RightScroll.BorderSizePixel = 0
+-- ===== PAGE CREATE =====
+local function NewPage(name)
+    local p = Instance.new("ScrollingFrame", Pages)
+    p.Name = name
+    p.Position = UDim2.fromOffset(240,46)
+    p.Size = UDim2.fromOffset(400,310)
+    p.CanvasSize = UDim2.new(0,0,0,0)
+    p.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    p.ScrollBarThickness = 4
+    p.ScrollBarImageColor3 = CYAN
+    p.BackgroundColor3 = PANEL
+    p.BorderSizePixel = 0
+    p.Visible = false
+    Instance.new("UICorner", p).CornerRadius = UDim.new(0,8)
 
-local RL = Instance.new("UIListLayout", RightScroll)
-RL.Padding = UDim.new(0,8)
+    local L = Instance.new("UIListLayout", p)
+    L.Padding = UDim.new(0,8)
 
--- ===== TAB BUTTON =====
-local function CreateTab(name)
-    local b = Instance.new("TextButton", LeftScroll)
+    return p
+end
+
+-- ===== OPTION =====
+local function Option(parent, text)
+    local f = Instance.new("Frame", parent)
+    f.Size = UDim2.new(1,0,0,38)
+    f.BackgroundColor3 = ITEM
+    f.BorderSizePixel = 0
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0,6)
+
+    local t = Instance.new("TextLabel", f)
+    t.Size = UDim2.new(1,-20,1,0)
+    t.Position = UDim2.fromOffset(10,0)
+    t.BackgroundTransparency = 1
+    t.Text = text
+    t.TextColor3 = Color3.fromRGB(230,230,230)
+    t.Font = Enum.Font.Gotham
+    t.TextSize = 13
+    t.TextXAlignment = Left
+end
+
+-- ===== TABS =====
+local Tabs = {
+    "Shop","Status And Server","LocalPlayer","Setting Farm",
+    "Hold and Select Skill","Farming","Stack Farming",
+    "Farming Other","Fruit and Raid, Dungeon","Sea Event",
+    "Upgrade Race","Get and Upgrade Items","PVP",
+    "Esp","Tab Webhook","Setting"
+}
+
+local PageList = {}
+
+for _,name in ipairs(Tabs) do
+    PageList[name] = NewPage(name)
+    Option(PageList[name], name.." Option 1")
+    Option(PageList[name], name.." Option 2")
+
+    local b = Instance.new("TextButton", Left)
     b.Size = UDim2.new(1,0,0,34)
     b.Text = name
     b.BackgroundColor3 = ITEM
@@ -101,65 +166,14 @@ local function CreateTab(name)
     b.TextSize = 13
     b.BorderSizePixel = 0
     Instance.new("UICorner", b).CornerRadius = UDim.new(0,6)
+
+    b.MouseButton1Click:Connect(function()
+        for _,p in pairs(PageList) do
+            p.Visible = false
+        end
+        PageList[name].Visible = true
+    end)
 end
 
--- ===== DEMO OPTION (RIGHT) =====
-local function CreateOption(text)
-    local f = Instance.new("Frame", RightScroll)
-    f.Size = UDim2.new(1,0,0,38)
-    f.BackgroundColor3 = ITEM
-    f.BorderSizePixel = 0
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0,6)
-
-    local l = Instance.new("TextLabel", f)
-    l.Size = UDim2.new(0.7,0,1,0)
-    l.BackgroundTransparency = 1
-    l.Text = text
-    l.TextColor3 = Color3.fromRGB(230,230,230)
-    l.Font = Enum.Font.Gotham
-    l.TextSize = 13
-
-    local c = Instance.new("TextButton", f)
-    c.Size = UDim2.new(0.25,0,0.6,0)
-    c.Position = UDim2.fromScale(0.72,0.2)
-    c.Text = "Click"
-    c.BackgroundColor3 = CYAN
-    c.TextColor3 = Color3.new(0,0,0)
-    c.Font = Enum.Font.GothamBold
-    c.TextSize = 12
-    c.BorderSizePixel = 0
-    Instance.new("UICorner", c).CornerRadius = UDim.new(0,6)
-end
-
--- ===== TAB LIST (THEO YÊU CẦU) =====
-local Tabs = {
-    "Shop",
-    "Status And Server",
-    "LocalPlayer",
-    "Setting Farm",
-    "Hold and Select Skill",
-    "Farming",
-    "Stack Farming",
-    "Farming Other",
-    "Fruit and Raid, Dungeon",
-    "Sea Event",
-    "Upgrade Race",
-    "Get and Upgrade Items",
-    "PVP",
-    "Esp",
-    "Tab Webhook",
-    "Setting"
-}
-
-for _,v in ipairs(Tabs) do
-    CreateTab(v)
-end
-
--- ===== DEMO CONTENT =====
-CreateOption("Option Example 1")
-CreateOption("Option Example 2")
-
--- ===== TOGGLE MENU =====
-Toggle.MouseButton1Click:Connect(function()
-    Main.Visible = not Main.Visible
-end)
+-- ===== DEFAULT TAB =====
+PageList["Shop"].Visible = true
