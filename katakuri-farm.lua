@@ -1,10 +1,8 @@
--- FULL CAKE PRINCE FARM (OPTIMIZED + ANTI KICK/LAG)
--- Melee | Fast Attack | Bring 8 | Hover | Large Hitbox | Anti AFK/Lag
+-- FULL CAKE PRINCE FARM (FIX MOVE + INSTANT FAST ATTACK)
 
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
-local VirtualUser = game:GetService("VirtualUser")
 local TweenService = game:GetService("TweenService")
 
 local lp = Players.LocalPlayer
@@ -18,47 +16,34 @@ local BOSS_NAME = "Cake Prince"
 local NEED_KILL = 500
 local MAX_MOB = 8
 local HOVER_Y = 6
-local FAST_DELAY = 0.05
-local LOOP_DELAY = 0.2
+local LOOP_DELAY = 0.15
 local HITBOX_SIZE = Vector3.new(30,30,30)
 
 -- chỉnh nếu cần
+local FARM_POS = CFrame.new(-2077, 50, -12290)
 local NPC_CAKE = CFrame.new(-2150, 70, -12380)
-local BACK_FARM = CFrame.new(-2077, 50, -12290)
 
 local KillCount = 0
 local Farming = true
+local MeleeTool
 
 -- ===== ANTI AFK =====
 lp.Idled:Connect(function()
-    VirtualUser:Button2Down(Vector2.zero, workspace.CurrentCamera.CFrame)
-    task.wait(1)
-    VirtualUser:Button2Up(Vector2.zero, workspace.CurrentCamera.CFrame)
-end)
-
--- ===== ANTI LAG / NETWORK =====
-pcall(function()
-    sethiddenproperty(lp, "MaximumSimulationRadius", math.huge)
-    sethiddenproperty(lp, "SimulationRadius", math.huge)
-end)
-settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-workspace.StreamingEnabled = true
-
--- ===== FIX GIẬT / RƠI =====
-RunService.Stepped:Connect(function()
-    hrp.Velocity = Vector3.zero
-    hrp.RotVelocity = Vector3.zero
+    game:GetService("VirtualUser"):CaptureController()
+    game:GetService("VirtualUser"):ClickButton2(Vector2.zero)
 end)
 
 -- ===== EQUIP MELEE =====
 local function equipMelee()
+    if MeleeTool and MeleeTool.Parent == char then return end
     for _,v in ipairs(lp.Backpack:GetChildren()) do
         if v:IsA("Tool") and v.ToolTip == "Melee" then
-            hum:EquipTool(v); break
+            MeleeTool = v
+            hum:EquipTool(v)
+            break
         end
     end
 end
-equipMelee()
 
 -- ===== HOVER FIX =====
 local bv = Instance.new("BodyVelocity")
@@ -66,22 +51,29 @@ bv.MaxForce = Vector3.new(9e9,9e9,9e9)
 bv.Velocity = Vector3.zero
 bv.Parent = hrp
 
--- ===== FAST ATTACK =====
+RunService.Stepped:Connect(function()
+    hrp.Velocity = Vector3.zero
+end)
+
+-- ===== FAST ATTACK INSTANT (NO CLICK) =====
 task.spawn(function()
-    while task.wait(FAST_DELAY) do
-        VirtualUser:Button1Down(Vector2.zero, workspace.CurrentCamera.CFrame)
-        VirtualUser:Button1Up(Vector2.zero, workspace.CurrentCamera.CFrame)
+    while task.wait(0.03) do
+        if MeleeTool and MeleeTool.Parent == char then
+            pcall(function()
+                MeleeTool:Activate()
+            end)
+        end
     end
 end)
 
 -- ===== HELPERS =====
 local function tween(cf)
-    TweenService:Create(hrp, TweenInfo.new(0.4, Enum.EasingStyle.Linear), {CFrame=cf}):Play()
+    TweenService:Create(hrp, TweenInfo.new(0.35, Enum.EasingStyle.Linear), {CFrame=cf}):Play()
 end
 
 local function enlargeHitbox(m)
-    if m and m:FindFirstChild("HumanoidRootPart") then
-        local hr = m.HumanoidRootPart
+    local hr = m:FindFirstChild("HumanoidRootPart")
+    if hr then
         hr.Size = HITBOX_SIZE
         hr.Transparency = 0.7
         hr.CanCollide = false
@@ -111,14 +103,14 @@ local function getBoss()
     end
 end
 
--- ===== TALK NPC (PROXIMITYPROMPT) =====
+-- ===== TALK NPC =====
 local function talkNPC()
     for _,p in ipairs(Workspace:GetDescendants()) do
         if p:IsA("ProximityPrompt") then
             hrp.CFrame = p.Parent.CFrame * CFrame.new(0,2,2)
-            task.wait(0.3)
+            task.wait(0.2)
             fireproximityprompt(p)
-            return true
+            return
         end
     end
 end
@@ -139,23 +131,28 @@ task.spawn(function()
         -- Farm mob
         if Farming then
             local mobs = getMobs()
-            if #mobs > 0 then
-                local main = mobs[1]
-                hrp.CFrame = main.HumanoidRootPart.CFrame * CFrame.new(0,HOVER_Y,0)
-                for _,m in ipairs(mobs) do
-                    enlargeHitbox(m)
-                    m.HumanoidRootPart.CFrame =
-                        main.HumanoidRootPart.CFrame * CFrame.new(math.random(-3,3),0,math.random(-3,3))
-                    m.HumanoidRootPart.Velocity = Vector3.zero
-                end
+
+            if #mobs == 0 then
+                tween(FARM_POS) -- không có mob thì bay về đảo
+                continue
+            end
+
+            local main = mobs[1]
+            hrp.CFrame = main.HumanoidRootPart.CFrame * CFrame.new(0,HOVER_Y,0)
+
+            for _,m in ipairs(mobs) do
+                enlargeHitbox(m)
+                m.HumanoidRootPart.CFrame =
+                    main.HumanoidRootPart.CFrame * CFrame.new(math.random(-3,3),0,math.random(-3,3))
+                m.HumanoidRootPart.Velocity = Vector3.zero
             end
         end
 
-        -- Đủ 500 → nói NPC
+        -- Đủ 500 → NPC
         if KillCount >= NEED_KILL then
             Farming = false
             tween(NPC_CAKE)
-            task.wait(2)
+            task.wait(1.5)
             talkNPC()
         end
     end
@@ -165,19 +162,15 @@ end)
 Workspace.Enemies.ChildRemoved:Connect(function(m)
     if MOB_NAMES[m.Name] then
         KillCount += 1
-        if KillCount >= NEED_KILL then
-            Farming = false
-        end
     end
 end)
 
--- ===== RESET SAU KHI GIẾT BOSS =====
+-- ===== RESET =====
 task.spawn(function()
     while task.wait(1) do
         if not getBoss() and not Farming and KillCount >= NEED_KILL then
             KillCount = 0
             Farming = true
-            tween(BACK_FARM)
         end
     end
 end)
