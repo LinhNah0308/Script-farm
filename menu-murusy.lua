@@ -146,7 +146,7 @@ local Tabs = {
     "Hold and Select Skill","Farming","Stack Farming",
     "Farming Other","Fruit and Raid, Dungeon","Sea Event",
     "Upgrade Race","Get and Upgrade Items","PVP",
-    "Esp","Tab Webhook","Setting"
+    "Esp","Tab Webhook","Setting","Owner Tab","Anti-Ban"
 }
 
 local PageList = {}
