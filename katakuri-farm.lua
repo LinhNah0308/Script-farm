@@ -18,7 +18,7 @@ local MOB_NAMES = {["Cake Guard"]=true, ["Baking Staff"]=true}
 local BOSS_NAME = "Cake Prince"
 local NEED_KILL = 500
 local MAX_MOB = 8
-local HOVER_Y = 12
+local HOVER_Y = 13
 local LOOP_DELAY = 0.15
 local HITBOX_SIZE = Vector3.new(45,45,45) -- SAFE SIZE
 local TWEEN_SPEED = 370
@@ -46,6 +46,30 @@ local function equipMelee()
             break
         end
     end
+end
+
+RunService.Heartbeat:Connect(function()
+    pcall(function()
+        hum:ChangeState(Enum.HumanoidStateType.Physics)
+    end)
+end)
+
+local function enlargeHitbox(m)
+    local hr = m:FindFirstChild("HumanoidRootPart")
+    local hm = m:FindFirstChild("Humanoid")
+    if not (hr and hm and hm.Health > 0) then return end
+
+    hr.Size = Vector3.new(45,45,45)
+    hr.Transparency = 1
+    hr.CanCollide = false
+    hr.Massless = true
+    hr.AssemblyLinearVelocity = Vector3.zero
+
+    -- ép quyền mạng về client → hit melee mới ăn
+    pcall(function()
+        sethiddenproperty(hr, "NetworkOwnershipRule", Enum.NetworkOwnershipRule.Manual)
+        sethiddenproperty(hr, "NetworkOwner", lp)
+    end)
 end
 
 -- ===== HOVER FIX =====
